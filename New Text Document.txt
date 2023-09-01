@@ -1,0 +1,52 @@
+import React, { useState, useEffect } from 'react';
+
+const Leaderboard = ({ players }) => {
+  const [nameMapping, setNameMapping] = useState({});
+
+  // Load the nameMapping from local storage when the component mounts
+  useEffect(() => {
+    const storedNameMapping = JSON.parse(localStorage.getItem('nameMapping')) || {};
+    setNameMapping(storedNameMapping);
+  }, []);
+
+  // Function to fetch name by player ID
+  const fetchName = async (playerId) => {
+    // Check if the name is already in the mapping
+    if (nameMapping[playerId]) {
+      return nameMapping[playerId];
+    } else {
+      // Fetch the name using an API or any other method
+      try {
+        const response = await fetch(`https://api.example.com/getName?playerId=${playerId}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Update the name mapping
+          const updatedMapping = { ...nameMapping, [playerId]: data.name };
+          setNameMapping(updatedMapping);
+          // Save the updated mapping to local storage
+          localStorage.setItem('nameMapping', JSON.stringify(updatedMapping));
+          return data.name;
+        } else {
+          console.error('Failed to fetch name');
+          return 'Unknown'; // Return a default name or handle the error as needed
+        }
+      } catch (error) {
+        console.error('Error fetching name:', error);
+        return 'Unknown'; // Handle the error as needed
+      }
+    }
+  };
+
+  // Example: Fetch names for all players
+  useEffect(() => {
+    players.forEach((player) => {
+      fetchName(player.playerId);
+    });
+  }, [players, nameMapping]);
+
+  return (
+    // ...rest of your component code
+  );
+};
+
+export default Leaderboard;
