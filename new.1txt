@@ -1,0 +1,42 @@
+const handleUpload = () => {
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const entries = XLSX.utils.sheet_to_json(sheet, {
+        header: 1, // Use the first row as headers
+        range: 1, // Skip the first row (assuming it contains headers)
+      });
+
+      // Find the indices of 'UID' and 'Points' columns
+      const uidIndex = entries[0].indexOf('UID');
+      const pointsIndex = entries[0].indexOf('Points');
+
+      // Map the entries to the desired format and assign 0 to points if it's undefined
+      const formattedEntries = entries.slice(1).map((entry) => ({
+        playerId: entry[uidIndex],
+        points: entry[pointsIndex] || 0, // Assign 0 if points is undefined
+      }));
+
+      // Filter out the entries starting from the last copied row
+      const entriesToCopy = formattedEntries.slice(lastCopiedRow);
+
+      // Update lastCopiedRow with the new value
+      setLastCopiedRow(lastCopiedRow + entriesToCopy.length);
+
+      // Store lastCopiedRow in local storage
+      localStorage.setItem('lastCopiedRow', lastCopiedRow + entriesToCopy.length);
+
+      // Add the entries to your application
+      addEntries(entriesToCopy);
+    };
+    reader.readAsArrayBuffer(selectedFile);
+
+    setMessage('Success');
+  } else {
+    setMessage('Error: Upload file');
+  }
+};
